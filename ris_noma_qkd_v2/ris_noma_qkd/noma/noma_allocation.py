@@ -82,6 +82,28 @@ def sic_achievable_rates(channel_gains, powers, order, noise_power):
     return rates
 
 
+def sic_sinr_values(channel_gains, powers, order, noise_power):
+    """Compute per-user SINR values under the same model as sic_achievable_rates."""
+    channel_gains = np.asarray(channel_gains, dtype=float)
+    powers = np.asarray(powers, dtype=float)
+    sinrs = np.zeros(len(channel_gains))
+
+    for rank, user in enumerate(order):
+        interference_users = order[:rank]
+        interference_power = (
+            powers[interference_users].sum()
+            if len(interference_users) else 0.0
+        )
+
+        sinrs[user] = (
+            powers[user] * channel_gains[user]
+        ) / (
+            interference_power * channel_gains[user] + noise_power
+        )
+
+    return sinrs
+
+
 def sum_rate(channel_gains, total_power, noise_power, alpha=0.6):
     """Convenience wrapper: allocate power, run SIC, return total + per-user rates."""
     powers, order = fractional_power_allocation(channel_gains, total_power, alpha)
